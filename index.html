@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV Viewer Application</title>
+    <!-- アプリケーション設定 -->
+    <script id="app-config" type="application/json">
+      {
+        "gridConfig": {
+          "gridColumns": [
+            {
+              "key": "id",
+              "displayName": "ID",
+              "width": "100px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "isKey": true
+            },
+            {
+              "key": "full_name",
+              "displayName": "氏名",
+              "width": "200px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "combine": {
+                "columns": ["last_name", "first_name", "first_name"],
+                "delimiter": " → "
+              }
+            },
+            {
+              "key": "last_name",
+              "displayName": "姓",
+              "width": "150px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "first_name",
+              "displayName": "名",
+              "width": "150px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "email",
+              "displayName": "メールアドレス",
+              "width": "250px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "department",
+              "displayName": "部署",
+              "width": "150px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "position",
+              "displayName": "役職",
+              "width": "150px",
+              "sortable": true,
+              "filterable": true,
+              "visible": false
+            },
+            {
+              "key": "status",
+              "displayName": "ステータス",
+              "width": "150px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "created_at",
+              "displayName": "作成日時",
+              "width": "200px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "formatter": "(value) => new Date(value).toLocaleString()"
+            },
+            {
+              "key": "updated_at",
+              "displayName": "更新日時",
+              "width": "200px",
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "formatter": "(value) => new Date(value).toLocaleString()"
+            }
+          ]
+        },
+        "detailConfig": {
+          "detailColumns": [
+            {
+              "key": "id",
+              "displayName": "ID",
+              "visible": true
+            },
+            {
+              "key": "full_name",
+              "displayName": "氏名",
+              "visible": true,
+              "combine": {
+                "columns": ["last_name", "first_name"],
+                "delimiter": " "
+              }
+            },
+            {
+              "key": "last_name",
+              "displayName": "姓",
+              "visible": true
+            },
+            {
+              "key": "first_name",
+              "displayName": "名",
+              "visible": true
+            },
+            {
+              "key": "email",
+              "displayName": "メールアドレス",
+              "visible": true
+            },
+            {
+              "key": "department",
+              "displayName": "部署",
+              "visible": true
+            },
+            {
+              "key": "position",
+              "displayName": "役職",
+              "visible": true
+            },
+            {
+              "key": "status",
+              "displayName": "ステータス",
+              "visible": true
+            },
+            {
+              "key": "created_at",
+              "displayName": "作成日時",
+              "visible": true,
+              "formatter": "(value) => new Date(value).toLocaleString()"
+            },
+            {
+              "key": "updated_at",
+              "displayName": "更新日時",
+              "visible": true,
+              "formatter": "(value) => new Date(value).toLocaleString()"
+            }
+          ]
+        },
+        "mergeConfig": {
+          "mainKey": "id",
+          "linkedKey": "id"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

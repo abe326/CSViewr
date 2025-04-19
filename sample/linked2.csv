@@ -1,0 +1,4 @@
+id,last_name,first_name,email,department,position,status,created_at,updated_at
+2,鈴木,花子,suzuki.hanako@example.com,人事部,部長,在籍,2024-01-05 09:30:00,2024-01-05 09:30:00
+4,田中,美咲,tanaka.misaki@example.com,経理部,部長,在籍,2024-01-05 10:30:00,2024-01-05 10:30:00
+6,中村,優子,nakamura.yuko@example.com,総務部,専務,在籍,2024-01-05 11:30:00,2024-01-05 11:30:00 
