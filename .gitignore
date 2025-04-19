@@ -46,3 +46,17 @@ out
 # Other
 .DS_Store
 Thumbs.db
+
+# Cursor/Bolt用
+.bolt/
+
+# macOS/Windows 特有のファイル（重複防止）
+.DS_Store
+Thumbs.db
+
+# 出力用フォルダ
+dist/
+build/
+
+# VSCode ワークスペース設定（任意除外）
+.vscode/
