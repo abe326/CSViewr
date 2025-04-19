@@ -40,3 +40,7 @@ export const formatters: Record<string, (value: string) => string> = {
   url: formatUrl,
   date: formatDate
 };
+
+// フォーマッター関数の型定義
+export type FormatterFunction = (value: string) => string;
+export type FormatterMap = Record<string, FormatterFunction>;

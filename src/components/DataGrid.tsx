@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowUpDown, Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { ColumnConfig } from '../types';
-import { formatters } from '../utils/formatters';
+import { formatters, FormatterFunction } from '../utils/formatters';
 
 interface DataGridProps {
   headers: ColumnConfig[];
@@ -117,17 +117,21 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
             {sortedData.map((row, rowIndex) => (
               <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
                 {headers.map(header => {
-                  const value = row[header.key] || '';
-                  const formattedValue = header.formatter && formatters[header.formatter] 
-                    ? formatters[header.formatter](value)
-                    : value;
+                  const rawValue = row[header.key] || '';
+                  // 引用符で囲まれた値から引用符を削除し、改行をスペースに置換
+                  const value = rawValue.replace(/^"(.*)"$/, '$1');
+                  const displayValue = value.replace(/\r?\n/g, ' ');
+                  
+                  const formattedValue = header.formatter && typeof header.formatter === 'string' && formatters[header.formatter] 
+                    ? formatters[header.formatter](displayValue)
+                    : displayValue;
 
                   return (
                     <td 
                       key={header.key} 
                       className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${header.isKey ? 'cursor-pointer hover:text-indigo-600' : ''}`}
                       onClick={() => handleCellClick(row, header)}
-                      {...(header.formatter 
+                      {...(header.formatter && typeof header.formatter === 'string' && formatters[header.formatter]
                         ? { dangerouslySetInnerHTML: { __html: formattedValue } }
                         : { children: formattedValue }
                       )}

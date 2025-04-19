@@ -1,3 +1,5 @@
+import Papa, { ParseResult, ParseError, ParseConfig } from 'papaparse';
+
 /**
  * CSVデータを処理するためのユーティリティモジュール
  * 
@@ -20,83 +22,88 @@ interface TimestampedEntry {
 }
 
 /**
+ * CSVセルの値をエスケープします
+ * 改行、ダブルクオート、カンマ、バックスラッシュ、パーセント記号に対応
+ * 
+ * @param value - エスケープする値
+ * @returns エスケープされた値
+ */
+export const escapeCSVCell = (value: string): string => {
+  if (!value) return '';
+  
+  // 特殊文字が含まれているかチェック
+  const needsEscape = /["\n\r,\\%]/.test(value);
+  if (needsEscape) {
+    // ダブルクォートをエスケープ（" → ""）
+    const escaped = value.replace(/"/g, '""');
+    // 値全体をダブルクォートで囲む
+    return `"${escaped}"`;
+  }
+  return value;
+};
+
+/**
+ * オブジェクトの配列をCSV文字列に変換します
+ * 
+ * @param data - 変換するデータ
+ * @param headers - 出力するヘッダー（指定がない場合は最初の行のキーを使用）
+ * @returns CSV文字列
+ */
+export const generateCSV = (
+  data: Record<string, string>[],
+  headers?: { key: string; displayName: string }[]
+): string => {
+  if (data.length === 0) return '';
+
+  // ヘッダーが指定されていない場合は、最初の行のキーを使用
+  const keys = headers?.map(h => h.key) || Object.keys(data[0]);
+  const headerNames = headers?.map(h => h.displayName) || keys;
+
+  // ヘッダー行の生成
+  const headerRow = headerNames.map(escapeCSVCell).join(',');
+
+  // データ行の生成
+  const rows = data.map(row => 
+    keys.map(key => escapeCSVCell(row[key] || '')).join(',')
+  );
+
+  // ヘッダーとデータを結合
+  return [headerRow, ...rows].join('\n');
+};
+
+/**
  * CSV文字列をオブジェクトの配列に変換します
+ * PapaParseを使用して、セル内の改行にも対応します
  * 
  * @param csvString - 解析対象のCSV文字列
- * @param options - 解析オプション（デフォルトではヘッダーあり）
  * @returns 各行をオブジェクトに変換した配列
- * 
- * @example
- * const csvString = 'id,name\n1,田中\n2,鈴木';
- * const data = parseCSV(csvString);
- * // 結果: [{ id: '1', name: '田中' }, { id: '2', name: '鈴木' }]
  */
-export const parseCSV = (
-  csvString: string, 
-  { hasHeader = true }: Partial<CSVParseOptions> = {}
-): Record<string, string>[] => {
-  const lines = csvString.split(/\r?\n/).filter(line => line.trim().length > 0);
-  if (lines.length === 0) return [];
+export const parseCSV = (csvString: string): Promise<Record<string, string>[]> => {
+  return new Promise((resolve, reject) => {
+    if (!csvString) {
+      resolve([]);
+      return;
+    }
 
-  const headers = hasHeader 
-    ? parseCSVLine(lines[0]) 
-    : generateDefaultHeaders(parseCSVLine(lines[0]).length);
+    try {
+      const result = Papa.parse(csvString, {
+        header: true,
+        skipEmptyLines: 'greedy',
+        transformHeader: (header: string) => header.trim(),
+        transform: (value: string) => value.trim()
+      });
 
-  const startIndex = hasHeader ? 1 : 0;
-  return lines.slice(startIndex).map(line => {
-    const values = parseCSVLine(line);
-    return headers.reduce((row, header, index) => {
-      row[header] = values[index] || '';
-      return row;
-    }, {} as Record<string, string>);
+      if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+        resolve([]);
+        return;
+      }
+
+      resolve(result.data as Record<string, string>[]);
+    } catch (error) {
+      reject(error);
+    }
   });
 };
-
-/**
- * CSV行を個別の値に分解します
- * 引用符で囲まれた値や、エスケープされた引用符に対応しています
- * 
- * @param line - 解析対象のCSV行
- * @returns 分解された値の配列
- */
-const parseCSVLine = (line: string): string[] => {
-  const result: string[] = [];
-  let currentValue = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"' && !inQuotes) {
-      inQuotes = true;
-    } else if (char === '"' && inQuotes) {
-      if (nextChar === '"') {
-        currentValue += '"';
-        i++;
-      } else {
-        inQuotes = false;
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(currentValue);
-      currentValue = '';
-    } else {
-      currentValue += char;
-    }
-  }
-
-  result.push(currentValue);
-  return result;
-};
-
-/**
- * デフォルトのヘッダー名を生成します
- * 
- * @param count - 生成するヘッダーの数
- * @returns ヘッダー名の配列
- */
-const generateDefaultHeaders = (count: number): string[] => 
-  Array.from({ length: count }, (_, i) => `列${i + 1}`);
 
 /**
  * 2つの値のうち、より新しいタイムスタンプを持つ値を返します
@@ -184,7 +191,8 @@ const mergeRows = (
           { value, timestamp: source['updated_at'] }
         );
       } else {
-        target[field] = `${target[field]}, ${value}`;
+        // 結合時もエスケープ処理を適用
+        target[field] = escapeCSVCell(`${target[field]}, ${value}`);
       }
     }
   });

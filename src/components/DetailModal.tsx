@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { ColumnConfig } from '../types';
-import { formatters } from '../utils/formatters';
+import { formatters, FormatterFunction } from '../utils/formatters';
 
 interface DetailModalProps {
   data: Record<string, string>;
@@ -65,27 +65,36 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
             </button>
           </div>
           <div className="bg-white px-4 py-5 sm:p-6">
-            <div className="space-y-4">
-              {visibleColumns.map(column => (
-                <div key={column.key} className="border-b border-gray-200 pb-3 last:border-0 last:pb-0">
-                  <div className="text-sm font-medium text-gray-500">{column.displayName}</div>
-                  <div className="mt-1 text-base text-gray-900">
-                    {column.formatter && formatters[column.formatter] ? (
-                      column.formatter === 'url' ? (
-                        <a 
-                          href={`mailto:${data[column.key]}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:text-blue-800 underline"
-                        >
-                          {data[column.key]}
-                        </a>
-                      ) : formatters[column.formatter](data[column.key])
-                    ) : data[column.key]}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <table className="min-w-full">
+              <tbody className="divide-y divide-gray-200">
+                {visibleColumns.map(column => {
+                  const rawValue = data[column.key] || '';
+                  const value = rawValue.replace(/^"(.*)"$/, '$1');
+                  
+                  return (
+                    <tr key={column.key}>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 align-top w-1/4">
+                        {column.displayName}
+                      </th>
+                      <td className="px-4 py-2 text-sm text-gray-900 whitespace-pre-wrap">
+                        {column.formatter && typeof column.formatter === 'string' && formatters[column.formatter] ? (
+                          column.formatter === 'url' ? (
+                            <a 
+                              href={`mailto:${value}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {value}
+                            </a>
+                          ) : formatters[column.formatter](value)
+                        ) : value || <span className="text-gray-400">-</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
