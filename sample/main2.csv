@@ -1,4 +1,0 @@
-id,last_name,first_name,email,department,position,status,created_at,updated_at
-6,中村,優子,nakamura.yuko@example.com,総務部,部長,在籍,2024-01-02 09:00:00,2024-01-02 09:00:00
-7,小林,正人,kobayashi.masato@example.com,開発部,課長,在籍,2024-01-02 09:30:00,2024-01-02 09:30:00
-8,加藤,恵美,kato.emi@example.com,人事部,主任,在籍,2024-01-02 10:00:00,2024-01-02 10:00:00 

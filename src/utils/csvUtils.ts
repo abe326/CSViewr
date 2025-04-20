@@ -122,19 +122,19 @@ const selectLatestValue = (oldEntry: TimestampedEntry, newEntry: TimestampedEntr
 };
 
 /**
+ * 文字列を正規化して比較用に変換します
+ * 全角・半角、大文字・小文字、空白を正規化
+ */
+const normalizeString = (value: string): string => {
+  return value
+    .trim()
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s　]+/g, ''); // 全角・半角スペースを削除
+};
+
+/**
  * 2つのCSVデータセットを指定されたキーに基づいて結合します
- * 
- * @param mainData - メインとなるCSVデータ
- * @param linkedData - 結合するCSVデータ
- * @param mainKey - メインデータの結合キー
- * @param linkedKey - 結合データの結合キー
- * @returns 結合されたデータセット
- * 
- * @example
- * const main = [{ id: '1', name: '田中' }];
- * const linked = [{ id: '1', dept: '営業' }];
- * const merged = mergeCSVData(main, linked, 'id', 'id');
- * // 結果: [{ id: '1', name: '田中', dept: '営業' }]
  */
 export const mergeCSVData = (
   mainData: Record<string, string>[],
@@ -142,58 +142,83 @@ export const mergeCSVData = (
   mainKey: string,
   linkedKey: string
 ): Record<string, string>[] => {
+  // 結合データのマップを構築
   const linkedMap = new Map<string, Record<string, string>>();
+  
+  // キーが存在するか確認
+  if (!mainData[0] || !mainData[0][mainKey]) {
+    console.warn(`メインデータにキー "${mainKey}" が存在しません`);
+    return mainData;
+  }
+  
+  if (!linkedData[0] || !linkedData[0][linkedKey]) {
+    console.warn(`結合データにキー "${linkedKey}" が存在しません`);
+    return mainData;
+  }
 
   // 結合データのマップを構築
   linkedData.forEach(row => {
     const key = row[linkedKey];
-    if (!linkedMap.has(key)) {
-      linkedMap.set(key, { ...row });
+    if (!key) return;
+
+    const normalizedKey = normalizeString(key);
+    if (!linkedMap.has(normalizedKey)) {
+      linkedMap.set(normalizedKey, { ...row });
     } else {
-      mergeRows(linkedMap.get(key)!, row);
+      // 既存のデータと新しいデータをマージ
+      const existingRow = linkedMap.get(normalizedKey)!;
+      Object.entries(row).forEach(([field, value]) => {
+        if (field !== linkedKey && value.trim() !== '') {
+          if (!existingRow[field] || existingRow[field].trim() === '') {
+            existingRow[field] = value;
+          } else if (normalizeString(existingRow[field]) !== normalizeString(value)) {
+            // 更新日時が新しい方を優先
+            if (field === 'ステータス' || field === '役職' || field === '部署') {
+              const existingDate = new Date(existingRow['更新日時'] || '').getTime();
+              const newDate = new Date(row['更新日時'] || '').getTime();
+              if (newDate > existingDate) {
+                existingRow[field] = value;
+              }
+            } else {
+              existingRow[field] = `${existingRow[field]}, ${value}`;
+            }
+          }
+        }
+      });
     }
   });
 
   // メインデータと結合
   return mainData.map(mainRow => {
+    const key = mainRow[mainKey];
+    if (!key) return mainRow;
+
+    const normalizedKey = normalizeString(key);
+    const linkedRow = linkedMap.get(normalizedKey);
+    if (!linkedRow) return mainRow;
+
     const result = { ...mainRow };
-    const linkedRow = linkedMap.get(mainRow[mainKey]);
     
-    if (linkedRow) {
-      mergeRows(result, linkedRow, linkedKey);
-    }
-    
-    return result;
-  });
-};
-
-/**
- * 2つのデータ行をマージします
- * 
- * @param target - マージ先の行データ
- * @param source - マージ元の行データ
- * @param excludeKey - マージから除外するキー
- */
-const mergeRows = (
-  target: Record<string, string>,
-  source: Record<string, string>,
-  excludeKey?: string
-): void => {
-  Object.entries(source).forEach(([field, value]) => {
-    if (field === excludeKey || value.trim() === '') return;
-
-    if (!target[field] || target[field].trim() === '') {
-      target[field] = value;
-    } else if (target[field] !== value) {
-      if (field === 'status' || field === 'position') {
-        target[field] = selectLatestValue(
-          { value: target[field], timestamp: target['updated_at'] },
-          { value, timestamp: source['updated_at'] }
-        );
-      } else {
-        // 結合時もエスケープ処理を適用
-        target[field] = escapeCSVCell(`${target[field]}, ${value}`);
+    // 連携データの各フィールドをマージ
+    Object.entries(linkedRow).forEach(([field, value]) => {
+      if (field !== linkedKey && value.trim() !== '') {
+        if (!result[field] || result[field].trim() === '') {
+          result[field] = value;
+        } else if (normalizeString(result[field]) !== normalizeString(value)) {
+          // 更新日時が新しい方を優先
+          if (field === 'ステータス' || field === '役職' || field === '部署') {
+            const mainDate = new Date(result['更新日時'] || '').getTime();
+            const linkedDate = new Date(linkedRow['更新日時'] || '').getTime();
+            if (linkedDate > mainDate) {
+              result[field] = value;
+            }
+          } else {
+            result[field] = `${result[field]}, ${value}`;
+          }
+        }
       }
-    }
+    });
+
+    return result;
   });
 };

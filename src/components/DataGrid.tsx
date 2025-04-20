@@ -31,7 +31,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
   };
 
   const handleCellClick = (row: Record<string, string>, column: ColumnConfig) => {
-    if (column.isKey) {
+    if (column.isKey || column.clickable) {
       onRowClick(row);
     }
   };
@@ -45,7 +45,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     });
   });
 
-  const sortData = (data: any[], field: string, direction: 'asc' | 'desc') => {
+  const sortData = (data: Record<string, string>[], field: string, direction: 'asc' | 'desc') => {
     return [...data].sort((a, b) => {
       const aValues = String(a[field] || '').split(',').map(v => v.trim());
       const bValues = String(b[field] || '').split(',').map(v => v.trim());
@@ -129,7 +129,9 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                   return (
                     <td 
                       key={header.key} 
-                      className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${header.isKey ? 'cursor-pointer hover:text-indigo-600' : ''}`}
+                      className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${
+                        header.isKey || header.clickable ? 'cursor-pointer hover:text-indigo-600 hover:underline' : ''
+                      }`}
                       onClick={() => handleCellClick(row, header)}
                       {...(header.formatter && typeof header.formatter === 'string' && formatters[header.formatter]
                         ? { dangerouslySetInnerHTML: { __html: formattedValue } }

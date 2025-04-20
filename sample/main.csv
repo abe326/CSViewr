@@ -1,7 +1,0 @@
-id,last_name,first_name,email,created_at,updated_at
-1,山田,太郎,yamada.taro@example.com,2024-01-01 09:00:00,2024-01-01 09:00:00
-2,"鈴
-木",花子,suzuki.hanako@example.com,2024-01-01 09:30:00,2024-01-01 09:30:00
-3,佐藤,次郎,sato.jiro@example.com,2024-01-01 10:00:00,2024-01-02 15:00:00
-4,田中,美咲,tanaka.misaki@example.com,2024-01-01 10:30:00,2024-01-01 10:30:00
-5,高橋,健一,takahashi.kenichi@example.com,2024-01-01 11:00:00,2024-01-03 17:00:00

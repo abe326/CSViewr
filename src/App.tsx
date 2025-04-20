@@ -3,7 +3,7 @@ import { FileUploadArea } from './components/FileUploadArea';
 import { DataGrid } from './components/DataGrid';
 import { DetailModal } from './components/DetailModal';
 import { Layout } from './components/Layout';
-import { parseCSV } from './utils/csvUtils';
+import { parseCSV, mergeCSVData } from './utils/csvUtils';
 import { useConfig } from './hooks/useConfig';
 import { CSVRow } from './types';
 
@@ -48,30 +48,17 @@ function App() {
           linkedFiles.map(async file => parseCSV(await file.text()))
         );
 
-        const linkedDataMap = new Map<string, Record<string, string>>();
-
-        for (const dataArray of linkedDataArrays) {
-          for (const row of dataArray) {
-            const key = row[mergeConfig.linkedKey];
-            if (!key) continue;
-            if (!linkedDataMap.has(key)) {
-              linkedDataMap.set(key, { ...row });
-            } else {
-              const existing = linkedDataMap.get(key)!;
-              Object.entries(row).forEach(([col, val]) => {
-                if (!existing[col] || existing[col].trim() === '') {
-                  existing[col] = val;
-                }
-              });
-            }
-          }
+        let mergedLinkedData = linkedDataArrays[0];
+        for (let i = 1; i < linkedDataArrays.length; i++) {
+          mergedLinkedData = [...mergedLinkedData, ...linkedDataArrays[i]];
         }
 
-        finalData = mergedMainData.map(mainRow => {
-          const mainKeyValue = mainRow[mergeConfig.mainKey];
-          const linkedRow = linkedDataMap.get(mainKeyValue);
-          return linkedRow ? { ...mainRow, ...linkedRow } : mainRow;
-        });
+        finalData = mergeCSVData(
+          mergedMainData,
+          mergedLinkedData,
+          mergeConfig.mainKey,
+          mergeConfig.linkedKey
+        );
       }
 
       // --- 列結合処理 ---
@@ -121,11 +108,15 @@ function App() {
 
   const visibleHeaders = gridColumns
     .filter(col => col.visible)
-    .map(col => ({
+    .map((col, index) => ({
       key: col.key,
       displayName: col.displayName,
       width: col.width,
-      isKey: col.key === mergeConfig.mainKey,
+      visible: true,
+      sortable: true,
+      filterable: true,
+      isKey: index === 0,
+      clickable: index === 0,
       formatter: col.formatter
     }));
 

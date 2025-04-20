@@ -23,15 +23,23 @@ export interface CSVData {
  * CSV設定
  * 列の表示方法に関する設定
  */
+export type FormatterFunction = (value: string) => string;
+
 export interface ColumnConfig {
   key: string;
   displayName: string;
   width?: string;
+  visible: boolean;
   sortable?: boolean;
   filterable?: boolean;
-  visible?: boolean;
-  formatter?: (value: string) => string;
   isKey?: boolean;
+  clickable?: boolean;
+  formatter?: string | FormatterFunction;
+  combine?: {
+    columns: string[];
+    delimiter: string;
+  };
+  mergeFromLinked?: boolean;
 }
 
 /**
@@ -64,4 +72,27 @@ export interface SortOptions {
  */
 export interface FilterOptions {
   [column: string]: string;
+}
+
+export interface MergeConfig {
+  mainKey: string;
+  linkedKey: string;
+}
+
+export interface GridConfig {
+  gridColumns: ColumnConfig[];
+}
+
+export interface DetailConfig {
+  detailColumns: ColumnConfig[];
+}
+
+export interface AppConfig {
+  gridConfig: {
+    gridColumns: ColumnConfig[];
+  };
+  detailConfig: {
+    detailColumns: ColumnConfig[];
+  };
+  mergeConfig: MergeConfig;
 }

@@ -1,26 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ColumnConfig } from '../types';
-
-interface GridConfig {
-  gridColumns: ColumnConfig[];
-}
-
-interface DetailConfig {
-  detailColumns: ColumnConfig[];
-}
-
-interface MergeConfig {
-  mergeConfig: {
-    mainKey: string;
-    linkedKey: string;
-  };
-}
-
-interface AppConfig {
-  gridConfig: GridConfig;
-  detailConfig: DetailConfig;
-  mergeConfig: MergeConfig;
-}
+import { AppConfig, ColumnConfig, MergeConfig } from '../types';
 
 export const useConfig = () => {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -49,7 +28,7 @@ export const useConfig = () => {
   return {
     gridColumns: config?.gridConfig.gridColumns || [],
     detailColumns: config?.detailConfig.detailColumns || [],
-    mergeConfig: config?.mergeConfig.mergeConfig || { mainKey: 'id', linkedKey: 'id' },
+    mergeConfig: config?.mergeConfig || { mainKey: '氏名', linkedKey: '氏名' },
     error
   };
 }; 

@@ -1,6 +1,130 @@
-# CSViewr
+# CSV Viewer Application
 
-CSVファイルを簡単に表示・編集できるWebアプリケーションです。複数のCSVファイルを結合して表示し、データの比較や編集が可能です。
+CSVファイルを読み込んで表示・編集するためのWebアプリケーションです。メインとなるCSVファイルと、それに関連する連携用CSVファイルを結合して表示することができます。
+
+## 設定方法
+
+設定は`index.html`ファイル内の`<script id="app-config" type="application/json">`タグで行います。
+
+### 基本構造
+
+```json
+{
+  "gridConfig": {
+    "gridColumns": [ ... ]  // グリッド表示の列設定
+  },
+  "detailConfig": {
+    "detailColumns": [ ... ]  // 詳細表示の列設定
+  },
+  "mergeConfig": {
+    "mainKey": "氏名",  // メインCSVのキー列
+    "linkedKey": "氏名",  // 連携CSVのキー列
+    "mergeColumns": ["部署", "役職", "ステータス"]  // 連携CSVから値を取得する列
+  }
+}
+```
+
+### 列の設定項目
+
+#### グリッド表示の列設定（gridColumns）
+
+| プロパティ | 型 | 説明 | 必須 |
+|------------|-----|------|------|
+| key | string | 列のキー（CSVのヘッダー名） | ○ |
+| displayName | string | 表示名 | ○ |
+| width | string | 列の幅（例: "150px"） | - |
+| visible | boolean | 表示/非表示 | ○ |
+| sortable | boolean | ソート可能にするか | - |
+| filterable | boolean | フィルター可能にするか | - |
+| isKey | boolean | キー列として使用するか | - |
+| clickable | boolean | クリック可能にするか | - |
+| formatter | string | 表示形式の変換関数 | - |
+| mergeFromLinked | boolean | 連携CSVの値を使用するか | - |
+
+#### 詳細表示の列設定（detailColumns）
+
+| プロパティ | 型 | 説明 | 必須 |
+|------------|-----|------|------|
+| key | string | 列のキー（CSVのヘッダー名） | ○ |
+| displayName | string | 表示名 | ○ |
+| visible | boolean | 表示/非表示 | ○ |
+| formatter | string | 表示形式の変換関数 | - |
+
+### 設定例
+
+```json
+{
+  "gridConfig": {
+    "gridColumns": [
+      {
+        "key": "氏名",
+        "displayName": "氏名",
+        "width": "150px",
+        "sortable": true,
+        "filterable": true,
+        "visible": true,
+        "isKey": true,
+        "clickable": true
+      },
+      {
+        "key": "部署",
+        "displayName": "部署",
+        "width": "150px",
+        "sortable": true,
+        "filterable": true,
+        "visible": true,
+        "mergeFromLinked": true
+      }
+    ]
+  }
+}
+```
+
+## 主な機能と使い方
+
+### 1. キー列の設定
+
+キー列は以下の2つの方法で設定できます：
+
+1. 列設定で`isKey: true`を指定
+2. `mergeConfig`の`mainKey`と`linkedKey`で指定
+
+キー列は自動的にクリック可能になり、クリックすると詳細画面が表示されます。
+
+### 2. データの結合方法
+
+#### 基本的な結合
+- メインCSVと連携CSVは、`mergeConfig`で指定されたキー列の値が一致するレコードが結合されます
+- キー列の比較時は以下の正規化が行われます：
+  - 全角・半角の統一
+  - 大文字・小文字の統一
+  - 空白文字の削除
+
+#### 値の優先順位
+1. 通常の列：メインCSVの値が優先されます
+2. `mergeFromLinked: true`が設定された列：
+   - 連携CSVの値が優先されます
+   - 更新日時が新しい方が採用されます
+
+### 3. 特殊な表示形式
+
+#### 日時のフォーマット
+```json
+{
+  "key": "更新日時",
+  "formatter": "(value) => new Date(value).toLocaleString()"
+}
+```
+
+#### 改行の扱い
+- グリッド表示：改行はスペースに変換されます
+- 詳細表示：改行はそのまま表示されます
+
+## 注意事項
+
+1. CSVファイルのヘッダー名は、設定ファイルの`key`と完全に一致する必要があります
+2. 日時データは`YYYY-MM-DD HH:mm:ss`形式である必要があります
+3. 連携CSVファイルは任意です（指定しなくても動作します）
 
 ## 特徴
 
@@ -17,70 +141,6 @@ CSVファイルを簡単に表示・編集できるWebアプリケーション�
 - 同じキーを持つレコードの値が異なる場合、カンマ区切りで結合表示
 - 列の表示/非表示、幅、ソート、フィルタリングの設定が可能
 - 日本語のソートとフィルタリングに対応
-
-## 使い方
-
-1. アプリケーションを起動
-2. 「CSVファイルを選択」ボタンをクリックしてメインCSVファイルを選択
-3. 「リンクCSVファイルを選択」ボタンをクリックしてリンクCSVファイルを選択
-4. キー列を選択して「結合」ボタンをクリック
-5. データが表示されたら、列ヘッダーをクリックしてソートやフィルタリングが可能
-6. 設定パネルから列の表示/非表示や幅を調整可能
-
-### index.htmlでの設定
-
-アプリケーションの初期設定は`index.html`ファイルで行うことができます：
-
-```html
-<!DOCTYPE html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CSViewr</title>
-    <!-- アプリケーションの設定 -->
-    <script>
-      window.CSVtoGRID_CONFIG = {
-        // デフォルトの列設定
-        defaultColumns: [
-          { key: 'id', displayName: 'ID', width: '100px', visible: true, sortable: true, filterable: true },
-          { key: 'name', displayName: '氏名', width: '200px', visible: true, sortable: true, filterable: true },
-          { key: 'position', displayName: '役職', width: '150px', visible: true, sortable: true, filterable: true },
-          { key: 'status', displayName: 'ステータス', width: '150px', visible: true, sortable: true, filterable: true }
-        ],
-        // デフォルトのキー列
-        defaultKeyColumn: 'id',
-        // テーマ設定
-        theme: 'light', // 'light' または 'dark'
-        // ページサイズ
-        pageSize: 50,
-        // その他の設定
-        enableExport: true,
-        enableImport: true
-      };
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-```
-
-設定可能なオプション：
-
-- `defaultColumns`: デフォルトで表示する列の設定
-  - `key`: 列のキー（CSVのヘッダー名と一致させる）
-  - `displayName`: 表示名
-  - `width`: 列の幅
-  - `visible`: 表示/非表示
-  - `sortable`: ソート可能かどうか
-  - `filterable`: フィルタリング可能かどうか
-- `defaultKeyColumn`: デフォルトのキー列
-- `theme`: アプリケーションのテーマ
-- `pageSize`: 1ページあたりの表示件数
-- `enableExport`: エクスポート機能の有効/無効
-- `enableImport`: インポート機能の有効/無効
 
 ## 使用ライブラリ・ライセンス
 
@@ -109,6 +169,42 @@ CSVファイルを簡単に表示・編集できるWebアプリケーション�
 - 表示方法
   - 一覧画面: 改行は削除され、1行で表示されます
   - 詳細画面: 改行が適用され、複数行で表示されます
+
+### 結合キーについて
+
+- 結合キー（mainKey, linkedKey）は日本語の列名でも指定可能です
+- 結合用CSVファイルのキー列は1列目である必要はありません
+- キー列以外の全ての列のデータが結合されます
+- 同じキーを持つレコードの値が異なる場合、カンマ区切りで結合表示されます
+
+#### サンプルCSVファイル
+
+**メインCSV（main.csv）**:
+```csv
+社員番号,氏名,部署,役職,ステータス,更新日時
+1001,"山田
+太郎",営業部,部長,在籍,2023-01-01 10:00:00
+1002,鈴木一郎,開発部,課長,在籍,2023-01-01 10:00:00
+1003,佐藤次郎,人事部,次長,休職,2023-01-01 10:00:00
+1004,田中美咲,総務部,主任,在籍,2023-01-01 10:00:00
+1005,高橋健一,営業部,課長,在籍,2023-01-01 10:00:00
+```
+
+**リンクCSV（linked.csv）**:
+```csv
+部署,役職,社員番号,ステータス,更新日時
+営業部,次長,1001,在籍,2023-02-01 15:30:00
+開発部,課長,1002,在籍,2023-02-01 15:30:00
+人事部,次長,1003,復職,2023-02-01 15:30:00
+総務部,主任,1004,在籍,2023-02-01 15:30:00
+営業部,課長,1005,休職,2023-02-01 15:30:00
+```
+
+この例では：
+- メインCSVの「社員番号」とリンクCSVの「社員番号」を結合キーとして使用
+- キー列は1列目ではありません（メインCSVでは1列目、リンクCSVでは3列目）
+- 同じ社員番号のレコードで値が異なる場合（例：佐藤次郎のステータスが「休職」→「復職」）、カンマ区切りで結合表示されます
+- 改行を含むデータ（山田太郎の氏名）はダブルクォーテーションで囲まれています
 
 ### CSVファイルの要件
 
