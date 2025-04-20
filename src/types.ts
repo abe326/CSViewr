@@ -1,7 +1,11 @@
 export interface ColumnConfig {
   key: string;
   displayName: string;
-  width: number | string;
+  width?: {
+    min?: string;
+    max?: string;
+    default?: string;
+  };
   visible: boolean;
   sortable?: boolean;
   filterable?: boolean;
@@ -11,6 +15,7 @@ export interface ColumnConfig {
     columns: string[];
     delimiter?: string;
   };
+  clickable?: boolean;
 }
 
 export interface DetailColumnConfig {

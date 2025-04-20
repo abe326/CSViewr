@@ -62,15 +62,29 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
 
   const sortedData = sortData(filteredData, sortField || '', sortDirection);
 
+  const processDisplayValue = (value: string): string => {
+    // 引用符で囲まれた値から外側の引用符を削除
+    let processed = value.replace(/^"(.*)"$/s, '$1');
+    
+    // エスケープされた特殊文字を元に戻す
+    processed = processed
+      .replace(/\\([!@#$%^&*()_+\-=<>,./?:;'{}[\]|])/g, '$1')  // エスケープされた特殊文字
+      .replace(/\\\\/, '\\')  // エスケープされたバックスラッシュ
+      .replace(/""/g, '"');   // エスケープされた引用符
+    
+    // グリッド表示用に改行をスペースに変換
+    return processed.replace(/\r?\n/g, ' ');
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center sticky top-0 z-10">
+    <div className="w-full overflow-x-auto">
+      <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center sticky top-0 z-10 w-full">
         <h3 className="text-base font-medium text-gray-900">データ一覧</h3>
         <div className="text-sm text-gray-500">{sortedData.length} 件表示中</div>
       </div>
       
-      <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="max-h-[calc(100vh-300px)] overflow-y-auto w-full">
+        <table className="w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               {headers.map((header) => (
@@ -78,7 +92,11 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                   key={header.key}
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  style={header.width ? { width: header.width } : undefined}
+                  style={header.width ? {
+                    minWidth: header.width.min,
+                    maxWidth: header.width.max,
+                    width: header.width.default
+                  } : undefined}
                 >
                   <div className="flex flex-col space-y-2">
                     <div 
@@ -118,9 +136,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
               <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
                 {headers.map(header => {
                   const rawValue = row[header.key] || '';
-                  // 引用符で囲まれた値から引用符を削除し、改行をスペースに置換
-                  const value = rawValue.replace(/^"(.*)"$/, '$1');
-                  const displayValue = value.replace(/\r?\n/g, ' ');
+                  const displayValue = processDisplayValue(rawValue);
                   
                   const formattedValue = header.formatter && typeof header.formatter === 'string' && formatters[header.formatter] 
                     ? formatters[header.formatter](displayValue)
@@ -129,9 +145,14 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                   return (
                     <td 
                       key={header.key} 
-                      className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${
+                      className={`px-6 py-4 text-sm text-gray-900 break-words ${
                         header.isKey || header.clickable ? 'cursor-pointer hover:text-indigo-600 hover:underline' : ''
                       }`}
+                      style={header.width ? {
+                        minWidth: header.width.min,
+                        maxWidth: header.width.max,
+                        width: header.width.default
+                      } : undefined}
                       onClick={() => handleCellClick(row, header)}
                       {...(header.formatter && typeof header.formatter === 'string' && formatters[header.formatter]
                         ? { dangerouslySetInnerHTML: { __html: formattedValue } }

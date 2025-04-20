@@ -11,7 +11,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-indigo-700">CSViewr</h1>
-            <div className="text-sm text-gray-500">最終更新: 2025年4月1日</div>
           </div>
         </div>
       </header>
@@ -22,7 +21,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       <footer className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="text-center text-sm text-gray-500">
-          © 2025 CSViewr - すべての権利を保有します
+          © 2025 CSViewr
         </div>
       </footer>
     </div>

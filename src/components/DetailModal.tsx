@@ -49,7 +49,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
         </div>
 
         <div 
-          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-7xl sm:w-full"
           ref={modalRef}
         >
           <div className="bg-indigo-600 px-4 py-3 sm:px-6 flex justify-between items-center">
@@ -73,10 +73,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
                   
                   return (
                     <tr key={column.key}>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 align-top w-1/4">
+                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 align-top w-1/6">
                         {column.displayName}
                       </th>
-                      <td className="px-4 py-2 text-sm text-gray-900 whitespace-pre-wrap">
+                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-pre-wrap">
                         {column.formatter && typeof column.formatter === 'string' && formatters[column.formatter] ? (
                           column.formatter === 'url' ? (
                             <a 
