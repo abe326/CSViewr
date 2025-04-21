@@ -135,6 +135,24 @@ CSVファイルを読み込んで表示・編集するためのWebアプリケ�
 }
 ```
 
+#### URLリンクの設定
+```json
+{
+  "key": "URL",
+  "displayName": "リンク",
+  "formatter": "(value) => `<a href=\"${value}\" target=\"_blank\" rel=\"noopener noreferrer\">${value}</a>`"
+}
+```
+
+または、リンクテキストを変更する場合：
+```json
+{
+  "key": "URL",
+  "displayName": "リンク",
+  "formatter": "(value) => `<a href=\"${value}\" target=\"_blank\" rel=\"noopener noreferrer\">リンクを開く</a>`"
+}
+```
+
 #### 改行の扱い
 - グリッド表示：改行はスペースに変換されます
 - 詳細表示：改行はそのまま表示されます
