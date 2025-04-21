@@ -71,6 +71,17 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
                   const rawValue = data[column.key] || '';
                   const value = rawValue.replace(/^"(.*)"$/, '$1');
                   
+                  // 結合列の処理
+                  let displayValue = value;
+                  if (column.combine) {
+                    const { columns, delimiter } = column.combine;
+                    const values = columns
+                      .map(key => data[key])
+                      .filter(value => value && value.trim() !== '')
+                      .map(value => value.replace(/^"(.*)"$/, '$1'));
+                    displayValue = values.join(delimiter || ' ');
+                  }
+                  
                   return (
                     <tr key={column.key}>
                       <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 align-top w-1/6">
@@ -80,15 +91,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
                         {column.formatter && typeof column.formatter === 'string' && formatters[column.formatter] ? (
                           column.formatter === 'url' ? (
                             <a 
-                              href={`mailto:${value}`} 
+                              href={`mailto:${displayValue}`} 
                               target="_blank" 
                               rel="noopener noreferrer" 
                               className="text-blue-600 hover:text-blue-800 underline"
                             >
-                              {value}
+                              {displayValue}
                             </a>
-                          ) : formatters[column.formatter](value)
-                        ) : value || <span className="text-gray-400">-</span>}
+                          ) : formatters[column.formatter](displayValue)
+                        ) : displayValue || <span className="text-gray-400">-</span>}
                       </td>
                     </tr>
                   );

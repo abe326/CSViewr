@@ -117,7 +117,8 @@ function App() {
       filterable: true,
       isKey: index === 0,
       clickable: index === 0,
-      formatter: col.formatter
+      formatter: col.formatter,
+      combine: col.combine
     }));
 
   if (error) {
