@@ -154,10 +154,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                         width: header.width.default
                       } : undefined}
                       onClick={() => handleCellClick(row, header)}
-                      {...(header.formatter && typeof header.formatter === 'string' && formatters[header.formatter]
-                        ? { dangerouslySetInnerHTML: { __html: formattedValue } }
-                        : { children: formattedValue }
-                      )}
+                      dangerouslySetInnerHTML={{ __html: formattedValue }}
                     />
                   );
                 })}

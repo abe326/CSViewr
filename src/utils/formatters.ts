@@ -15,6 +15,14 @@ export const formatUrl = (value: string): string => {
   return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${value}</a>`;
 };
 
+// カスタムURLフォーマッター
+export const formatCustomUrl = (value: string, displayText: string = 'リンクを開く'): string => {
+  if (!value) return '';
+  
+  const href = value.startsWith('http') ? value : `https://${value}`;
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${displayText}</a>`;
+};
+
 /**
  * 日付を yyyy/mm/dd 形式に整形
  */
@@ -38,7 +46,8 @@ export const formatDate = (value: string): string => {
  */
 export const formatters: Record<string, (value: string) => string> = {
   url: formatUrl,
-  date: formatDate
+  date: formatDate,
+  customUrl: formatCustomUrl
 };
 
 // フォーマッター関数の型定義
