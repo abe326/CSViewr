@@ -12,7 +12,7 @@ function App() {
   const [selectedRow, setSelectedRow] = useState<Record<string, string> | null>(null);
   const [data, setData] = useState<Record<string, string>[]>([]);
   const [availableColumns, setAvailableColumns] = useState<string[]>([]);
-  const { gridColumns, detailColumns, mergeConfig, error } = useConfig();
+  const { config, error } = useConfig();
 
   const handleFileUpload = async (mainFiles: File[], linkedFiles: File[]) => {
     try {
@@ -43,7 +43,7 @@ function App() {
       let finalData = mergedMainData;
 
       // --- 連携CSVの読み込み（列方向に統合） ---
-      if (linkedFiles.length > 0) {
+      if (linkedFiles.length > 0 && config?.mergeConfig) {
         const linkedDataArrays = await Promise.all(
           linkedFiles.map(async file => parseCSV(await file.text()))
         );
@@ -56,32 +56,34 @@ function App() {
         finalData = mergeCSVData(
           mergedMainData,
           mergedLinkedData,
-          mergeConfig.mainKey,
-          mergeConfig.linkedKey
+          config.mergeConfig.mainKey,
+          config.mergeConfig.linkedKey
         );
       }
 
       // --- 列結合処理 ---
-      finalData = finalData.map(row => {
-        const combinedRow = { ...row };
-        gridColumns.forEach(col => {
-          if (col.combine) {
-            const { columns, delimiter } = col.combine;
-            const values = columns
-              .map(key => row[key])
-              .filter(value => value && value.trim() !== '');
-            combinedRow[col.key] = values.join(delimiter || ' ');
-          }
+      if (config?.gridConfig.gridColumns) {
+        finalData = finalData.map(row => {
+          const combinedRow = { ...row };
+          config.gridConfig.gridColumns.forEach(col => {
+            if (col.combine) {
+              const { columns, delimiter } = col.combine;
+              const values = columns
+                .map(key => row[key])
+                .filter(value => value && value.trim() !== '');
+              combinedRow[col.key] = values.join(delimiter || ' ');
+            }
+          });
+          return combinedRow;
         });
-        return combinedRow;
-      });
+      }
 
       // --- 表示データセット ---
       if (finalData.length > 0) {
         setData(finalData);
         const allColumns = new Set([
           ...Object.keys(finalData[0]),
-          ...gridColumns.map(col => col.key)
+          ...(config?.gridConfig.gridColumns?.map(col => col.key) || [])
         ]);
         setAvailableColumns(Array.from(allColumns));
       } else {
@@ -106,30 +108,23 @@ function App() {
     setSelectedRow(null);
   };
 
-  const visibleHeaders = gridColumns
-    .filter(col => col.visible)
-    .map((col, index) => ({
-      key: col.key,
-      displayName: col.displayName,
-      width: col.width,
-      visible: true,
-      sortable: true,
-      filterable: true,
-      isKey: index === 0,
-      clickable: index === 0,
-      formatter: col.formatter,
-      combine: col.combine
-    }));
-
-  if (error) {
+  if (!config || error) {
     return (
       <Layout>
         <div className="p-4 text-red-600">
-          設定ファイルの読み込みに失敗しました: {error}
+          {error || '設定の読み込み中...'}
         </div>
       </Layout>
     );
   }
+
+  const visibleHeaders = config.gridConfig.gridColumns
+    .filter(col => col.visible)
+    .map((col, index) => ({
+      ...col,
+      isKey: index === 0,
+      clickable: index === 0
+    }));
 
   return (
     <Layout>
@@ -148,7 +143,7 @@ function App() {
       {showModal && selectedRow && (
         <DetailModal 
           data={selectedRow}
-          columns={detailColumns}
+          columns={config.detailConfig.detailColumns}
           onClose={handleCloseModal}
         />
       )}

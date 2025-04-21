@@ -386,3 +386,101 @@ npm run build
 - コンポーネントは関数コンポーネントとReact Hooksを使用すること
 - テストは主要な機能をカバーすること
 - コメントは日本語で記述すること 
+
+### フォーマッター
+
+以下のフォーマッターが利用可能です：
+
+#### url
+URLを自動的にリンク化します。空の値や無効なURLの場合は何も表示しません。
+
+```json
+{
+  "key": "ウェブサイト",
+  "displayName": "ウェブサイト",
+  "formatter": "(value) => value ? `<a href=\"${value}\" target=\"_blank\" rel=\"noopener noreferrer\">リンクを開く</a>` : ''",
+  "visible": true
+}
+```
+
+#### customUrl
+テキストとURLを分けて表示します。`|`で区切って指定します。
+
+```json
+{
+  "key": "リンク",
+  "displayName": "リンク",
+  "formatter": "customUrl",
+  "visible": true
+}
+```
+
+データ例：`"会社ウェブサイト|https://example.com"`
+
+#### date
+日付を`yyyy/mm/dd`形式に整形します。
+
+```json
+{
+  "key": "更新日時",
+  "displayName": "更新日時",
+  "formatter": "date",
+  "visible": true
+}
+```
+
+#### multiline
+改行を保持して表示します。グリッド表示では改行を空白に変換し、詳細表示では改行を保持します。
+
+```json
+{
+  "key": "備考",
+  "displayName": "備考",
+  "formatter": "multiline",
+  "visible": true
+}
+```
+
+### コンポーネント構成
+
+アプリケーションは以下のコンポーネントで構成されています：
+
+#### App.tsx
+- アプリケーションのメインコンポーネント
+- 設定の読み込みと状態管理
+- ファイルアップロードとデータ処理の制御
+
+#### FileUploadArea.tsx
+- CSVファイルのアップロード機能
+- メインCSVと連携CSVの個別アップロード
+- ドラッグ&ドロップ対応
+- アップロードされたファイルの一覧表示と削除機能
+
+#### DataGrid.tsx
+- CSVデータのグリッド表示
+- ソート機能
+- フィルター機能
+- 行のクリックによる詳細表示
+- カスタムフォーマッターによる表示制御
+
+#### DetailModal.tsx
+- レコードの詳細表示
+- 改行を保持した表示
+- カスタムフォーマッターによる表示制御
+- モーダルウィンドウでの表示
+
+#### Layout.tsx
+- アプリケーションの共通レイアウト
+- ヘッダー、メインコンテンツ、フッターの構成
+- レスポンシブデザイン対応 
+
+## ライセンス
+
+本プロジェクトは、以下のオープンソースライブラリを使用しています：
+
+- DOMPurify (Apache License 2.0 / Mozilla Public License 2.0)
+- PapaParse (MIT License)
+- Lucide-React (ISC License)
+- React (MIT License)
+
+詳細なライセンス情報は[LICENSES/README.md](LICENSES/README.md)を参照してください。 

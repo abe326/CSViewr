@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, Search, ArrowUp, ArrowDown } from 'lucide-react';
-import { ColumnConfig } from '../types';
+import { ColumnConfig, ProcessedColumnConfig } from '../types';
 import { formatters, FormatterFunction } from '../utils/formatters';
 
 interface DataGridProps {
-  headers: ColumnConfig[];
+  headers: ProcessedColumnConfig[];
   data: Record<string, string>[];
-  onRowClick: (row: Record<string, string>) => void;
+  onRowClick?: (row: Record<string, string>) => void;
 }
 
 export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick }) => {
@@ -30,12 +30,6 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     }));
   };
 
-  const handleCellClick = (row: Record<string, string>, column: ColumnConfig) => {
-    if (column.isKey || column.clickable) {
-      onRowClick(row);
-    }
-  };
-
   // フィルターとソートの適用
   const filteredData = data.filter(row => {
     return Object.entries(filters).every(([key, filterValue]) => {
@@ -45,22 +39,25 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     });
   });
 
-  const sortData = (data: Record<string, string>[], field: string, direction: 'asc' | 'desc') => {
-    return [...data].sort((a, b) => {
-      const aValues = String(a[field] || '').split(',').map(v => v.trim());
-      const bValues = String(b[field] || '').split(',').map(v => v.trim());
-      
-      // 複数の値がある場合は最初の値でソート
-      const aValue = aValues[0] || '';
-      const bValue = bValues[0] || '';
-      
-      return direction === 'asc'
-        ? aValue.localeCompare(bValue, 'ja', { sensitivity: 'base' })
-        : bValue.localeCompare(aValue, 'ja', { sensitivity: 'base' });
-    });
-  };
+  const sortedData = useMemo(() => {
+    if (!sortField) return filteredData;
 
-  const sortedData = sortData(filteredData, sortField || '', sortDirection);
+    return [...filteredData].sort((a, b) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      const direction = sortDirection === 'asc' ? 1 : -1;
+
+      // 数値として比較可能な場合は数値比較
+      const aNum = Number(aValue);
+      const bNum = Number(bValue);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return (aNum - bNum) * direction;
+      }
+
+      // それ以外は文字列比較
+      return aValue.localeCompare(bValue) * direction;
+    });
+  }, [filteredData, sortField, sortDirection]);
 
   const processDisplayValue = (value: string): string => {
     // 引用符で囲まれた値から外側の引用符を削除
@@ -74,6 +71,22 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     
     // グリッド表示用に改行をスペースに変換
     return processed.replace(/\r?\n/g, ' ');
+  };
+
+  const renderCell = (value: string, header: ProcessedColumnConfig) => {
+    // グリッド表示用に改行をスペースに変換
+    const displayValue = value.replace(/\r?\n/g, ' ');
+
+    if (header.processedFormatter) {
+      const formattedValue = header.processedFormatter(displayValue);
+      return (
+        <div
+          className="cell-content"
+          dangerouslySetInnerHTML={{ __html: formattedValue }}
+        />
+      );
+    }
+    return displayValue;
   };
 
   return (
@@ -91,41 +104,38 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                 <th
                   key={header.key}
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  style={header.width ? {
-                    minWidth: header.width.min,
-                    maxWidth: header.width.max,
-                    width: header.width.default
-                  } : undefined}
+                  className={`
+                    px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                    ${header.sortable ? 'cursor-pointer hover:bg-gray-200' : ''}
+                    ${header.width ? `w-${header.width}` : ''}
+                  `}
+                  onClick={() => header.sortable && handleSort(header.key)}
                 >
                   <div className="flex flex-col space-y-2">
-                    <div 
-                      className="flex items-center cursor-pointer hover:text-indigo-600 transition-colors"
-                      onClick={() => handleSort(header.key)}
-                    >
+                    <div className="flex items-center">
                       <span>{header.displayName}</span>
-                      <span className="ml-1">
-                        {sortField === header.key ? (
-                          sortDirection === 'asc' ? (
+                      {sortField === header.key && (
+                        <span className="ml-1">
+                          {sortDirection === 'asc' ? (
                             <ArrowUp size={14} className="text-indigo-600" />
                           ) : (
                             <ArrowDown size={14} className="text-indigo-600" />
-                          )
-                        ) : (
-                          <ArrowUpDown size={14} className="text-gray-400" />
-                        )}
-                      </span>
+                          )}
+                        </span>
+                      )}
                     </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8"
-                        placeholder="フィルタ..."
-                        onChange={(e) => handleFilterChange(header.key, e.target.value)}
-                        value={filters[header.key] || ''}
-                      />
-                      <Search size={14} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
+                    {header.filterable !== false && (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8"
+                          placeholder="フィルタ..."
+                          onChange={(e) => handleFilterChange(header.key, e.target.value)}
+                          value={filters[header.key] || ''}
+                        />
+                        <Search size={14} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                 </th>
               ))}
@@ -133,29 +143,24 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedData.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
-                {headers.map(header => {
+              <tr
+                key={rowIndex}
+                className="hover:bg-gray-50"
+              >
+                {headers.map((header, colIndex) => {
                   const rawValue = row[header.key] || '';
-                  const displayValue = processDisplayValue(rawValue);
-                  
-                  const formattedValue = header.formatter && typeof header.formatter === 'string' && formatters[header.formatter] 
-                    ? formatters[header.formatter](displayValue)
-                    : displayValue;
-
+                  const isKeyColumn = colIndex === 0;
                   return (
-                    <td 
-                      key={header.key} 
-                      className={`px-6 py-4 text-sm text-gray-900 break-words ${
-                        header.isKey || header.clickable ? 'cursor-pointer hover:text-indigo-600 hover:underline' : ''
-                      }`}
-                      style={header.width ? {
-                        minWidth: header.width.min,
-                        maxWidth: header.width.max,
-                        width: header.width.default
-                      } : undefined}
-                      onClick={() => handleCellClick(row, header)}
-                      dangerouslySetInnerHTML={{ __html: formattedValue }}
-                    />
+                    <td
+                      key={`${rowIndex}-${colIndex}`}
+                      className={`
+                        px-6 py-4 text-sm text-gray-900 break-words
+                        ${isKeyColumn ? 'cursor-pointer hover:text-indigo-600 hover:underline' : ''}
+                      `}
+                      onClick={() => isKeyColumn && onRowClick?.(row)}
+                    >
+                      {renderCell(rawValue, header)}
+                    </td>
                   );
                 })}
               </tr>

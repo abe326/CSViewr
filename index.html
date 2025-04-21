@@ -87,6 +87,20 @@
               "filterable": true,
               "visible": true,
               "formatter": "(value) => new Date(value).toLocaleString()"
+            },
+            {
+              "key": "URL",
+              "displayName": "URL",
+              "width": {
+                "min": "80px",
+                "max": "150px",
+                "default": "100px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "mergeFromLinked": true,
+              "formatter": "(value) => value ? `<a href=\"${value}\" target=\"_blank\" rel=\"noopener noreferrer\">リンクを開く</a>` : ''"
             }
           ]
         },
@@ -128,7 +142,7 @@
         "mergeConfig": {
           "mainKey": "氏名",
           "linkedKey": "氏名",
-          "mergeColumns": ["部署", "役職", "ステータス"]
+          "mergeColumns": ["部署", "役職", "ステータス", "URL"]
         }
       }
     </script>

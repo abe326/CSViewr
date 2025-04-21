@@ -1,15 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { ColumnConfig } from '../types';
+import { ColumnConfig, ProcessedColumnConfig } from '../types';
 import { formatters, FormatterFunction } from '../utils/formatters';
 
 interface DetailModalProps {
   data: Record<string, string>;
-  columns: ColumnConfig[];
+  columns: ProcessedColumnConfig[];
   onClose: () => void;
 }
 
-export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({
+  data,
+  columns,
+  onClose,
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,8 +42,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
     };
   }, [onClose]);
 
-  // 表示する列をフィルタリング
-  const visibleColumns = columns.filter(col => col.visible);
+  const renderValue = (value: string, column: ProcessedColumnConfig) => {
+    if (column.processedFormatter) {
+      const shouldPreserveLineBreaks = !column.formatter || column.formatter === 'multiline';
+      const displayValue = shouldPreserveLineBreaks ? value.replace(/\n/g, '<br>') : value;
+      const formattedValue = column.processedFormatter(displayValue);
+      return (
+        <div
+          className="formatted-content whitespace-pre-line"
+          dangerouslySetInnerHTML={{ __html: formattedValue }}
+        />
+      );
+    }
+    return <div className="whitespace-pre-line">{value}</div>;
+  };
 
   return (
     <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -65,47 +81,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({ data, columns, onClose
             </button>
           </div>
           <div className="bg-white px-4 py-5 sm:p-6">
-            <table className="min-w-full">
-              <tbody className="divide-y divide-gray-200">
-                {visibleColumns.map(column => {
-                  const rawValue = data[column.key] || '';
-                  const value = rawValue.replace(/^"(.*)"$/, '$1');
-                  
-                  // 結合列の処理
-                  let displayValue = value;
-                  if (column.combine) {
-                    const { columns, delimiter } = column.combine;
-                    const values = columns
-                      .map(key => data[key])
-                      .filter(value => value && value.trim() !== '')
-                      .map(value => value.replace(/^"(.*)"$/, '$1'));
-                    displayValue = values.join(delimiter || ' ');
-                  }
-                  
-                  return (
-                    <tr key={column.key}>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 align-top w-1/6">
-                        {column.displayName}
-                      </th>
-                      <td className="px-6 py-4 text-sm text-gray-900 whitespace-pre-wrap">
-                        {column.formatter && typeof column.formatter === 'string' && formatters[column.formatter] ? (
-                          column.formatter === 'url' ? (
-                            <a 
-                              href={`mailto:${displayValue}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                              {displayValue}
-                            </a>
-                          ) : formatters[column.formatter](displayValue)
-                        ) : displayValue || <span className="text-gray-400">-</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <dl className="space-y-4">
+              {columns
+                .filter(column => column.visible !== false)
+                .map(column => (
+                  <div key={column.key} className="grid grid-cols-3 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">
+                      {column.displayName}
+                    </dt>
+                    <dd className="text-sm text-gray-900 col-span-2">
+                      {renderValue(data[column.key] || '', column)}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button

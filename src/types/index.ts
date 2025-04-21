@@ -28,18 +28,22 @@ export type FormatterFunction = (value: string) => string;
 export interface ColumnConfig {
   key: string;
   displayName: string;
-  width?: string;
-  visible: boolean;
+  width?: number;
+  visible?: boolean;
   sortable?: boolean;
   filterable?: boolean;
   isKey?: boolean;
   clickable?: boolean;
   formatter?: string | FormatterFunction;
+  mergeFromLinked?: boolean;
   combine?: {
     columns: string[];
-    delimiter: string;
+    delimiter?: string;
   };
-  mergeFromLinked?: boolean;
+}
+
+export interface ProcessedColumnConfig extends Omit<ColumnConfig, 'formatter'> {
+  processedFormatter?: FormatterFunction;
 }
 
 /**
@@ -77,6 +81,7 @@ export interface FilterOptions {
 export interface MergeConfig {
   mainKey: string;
   linkedKey: string;
+  mergeColumns?: string[];
 }
 
 export interface GridConfig {
@@ -88,11 +93,17 @@ export interface DetailConfig {
 }
 
 export interface AppConfig {
+  gridConfig: GridConfig;
+  detailConfig: DetailConfig;
+  mergeConfig: MergeConfig;
+}
+
+export interface ProcessedAppConfig {
   gridConfig: {
-    gridColumns: ColumnConfig[];
+    gridColumns: ProcessedColumnConfig[];
   };
   detailConfig: {
-    detailColumns: ColumnConfig[];
+    detailColumns: ProcessedColumnConfig[];
   };
   mergeConfig: MergeConfig;
 }
