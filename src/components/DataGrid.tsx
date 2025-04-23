@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, Search, ArrowUp, ArrowDown } from 'lucide-react';
-import { ColumnConfig, ProcessedColumnConfig } from '../types';
+import type { ProcessedColumnConfig } from '../types/index';
 import { formatters, FormatterFunction } from '../utils/formatters';
 
 interface DataGridProps {
@@ -13,6 +13,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -30,14 +31,25 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     }));
   };
 
-  // フィルターとソートの適用
-  const filteredData = data.filter(row => {
-    return Object.entries(filters).every(([key, filterValue]) => {
-      if (!filterValue) return true;
-      const cellValue = row[key] || '';
-      return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+  // グローバル検索とフィルターの適用
+  const filteredData = useMemo(() => {
+    return data.filter(row => {
+      // グローバル検索
+      if (globalSearch) {
+        const allValues = Object.values(row).join(' ').toLowerCase();
+        if (!allValues.includes(globalSearch.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 列ごとのフィルター
+      return Object.entries(filters).every(([key, filterValue]) => {
+        if (!filterValue) return true;
+        const cellValue = row[key] || '';
+        return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+      });
     });
-  });
+  }, [data, filters, globalSearch]);
 
   const sortedData = useMemo(() => {
     if (!sortField) return filteredData;
@@ -91,9 +103,21 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center sticky top-0 z-10 w-full">
-        <h3 className="text-base font-medium text-gray-900">データ一覧</h3>
-        <div className="text-sm text-gray-500">{sortedData.length} 件表示中</div>
+      <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center sticky top-0 z-10 w-full">
+        <h3 className="text-base font-medium text-gray-900 mr-4">データ一覧</h3>
+        <div className="flex items-center flex-1">
+          <div className="relative w-[600px]">
+            <input
+              type="text"
+              className="block w-full rounded-md border-2 border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 pl-10 bg-white"
+              placeholder="全文検索..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+            />
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          <div className="text-sm text-gray-500 whitespace-nowrap ml-auto min-w-[120px] text-right pr-4">{sortedData.length} 件表示中</div>
+        </div>
       </div>
       
       <div className="max-h-[calc(100vh-300px)] overflow-y-auto w-full">
@@ -105,7 +129,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                   key={header.key}
                   scope="col"
                   className={`
-                    px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                    px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200
                     ${header.sortable ? 'cursor-pointer hover:bg-gray-200' : ''}
                     ${header.width ? `w-${header.width}` : ''}
                   `}
@@ -128,7 +152,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                       <div className="relative">
                         <input
                           type="text"
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8"
+                          className="block w-full rounded-md border-2 border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8 bg-white"
                           placeholder="フィルタ..."
                           onChange={(e) => handleFilterChange(header.key, e.target.value)}
                           value={filters[header.key] || ''}
@@ -145,7 +169,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
             {sortedData.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                className="hover:bg-gray-50"
+                className="border-b border-gray-200 hover:bg-gray-50"
               >
                 {headers.map((header, colIndex) => {
                   const rawValue = row[header.key] || '';
@@ -167,7 +191,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
             ))}
             {sortedData.length === 0 && (
               <tr>
-                <td colSpan={headers.length} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={headers.length} className="px-6 py-4 text-center text-sm text-gray-500 border-b border-gray-100">
                   表示するデータがありません。別のフィルタ条件を試すか、CSVファイルをアップロードしてください。
                 </td>
               </tr>

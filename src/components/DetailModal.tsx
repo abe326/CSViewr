@@ -81,11 +81,16 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </button>
           </div>
           <div className="bg-white px-4 py-5 sm:p-6">
-            <dl className="space-y-4">
+            <dl className="space-y-0">
               {columns
                 .filter(column => column.visible !== false)
-                .map(column => (
-                  <div key={column.key} className="grid grid-cols-3 gap-4">
+                .map((column, index) => (
+                  <div 
+                    key={column.key} 
+                    className={`grid grid-cols-3 gap-4 py-4 ${
+                      index !== columns.length - 1 ? 'border-b border-gray-200' : ''
+                    }`}
+                  >
                     <dt className="text-sm font-medium text-gray-500">
                       {column.displayName}
                     </dt>

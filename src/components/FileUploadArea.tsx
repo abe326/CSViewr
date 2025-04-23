@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload, Link, X } from 'lucide-react';
 
 interface FileUploadAreaProps {
@@ -8,12 +8,17 @@ interface FileUploadAreaProps {
 export const FileUploadArea: React.FC<FileUploadAreaProps> = ({ onUpload }) => {
   const [mainFiles, setMainFiles] = useState<File[]>([]);
   const [linkedFiles, setLinkedFiles] = useState<File[]>([]);
+  const mainFileInputRef = useRef<HTMLInputElement>(null);
+  const linkedFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleMainFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       setMainFiles(prev => [...prev, ...files]);
       onUpload([...mainFiles, ...files], linkedFiles);
+    }
+    if (mainFileInputRef.current) {
+      mainFileInputRef.current.value = '';
     }
   };
 
@@ -23,18 +28,27 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({ onUpload }) => {
       setLinkedFiles(prev => [...prev, ...files]);
       onUpload(mainFiles, [...linkedFiles, ...files]);
     }
+    if (linkedFileInputRef.current) {
+      linkedFileInputRef.current.value = '';
+    }
   };
 
   const removeMainFile = (index: number) => {
     const newFiles = mainFiles.filter((_, i) => i !== index);
     setMainFiles(newFiles);
     onUpload(newFiles, linkedFiles);
+    if (mainFileInputRef.current) {
+      mainFileInputRef.current.value = '';
+    }
   };
 
   const removeLinkedFile = (index: number) => {
     const newFiles = linkedFiles.filter((_, i) => i !== index);
     setLinkedFiles(newFiles);
     onUpload(mainFiles, newFiles);
+    if (linkedFileInputRef.current) {
+      linkedFileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -48,6 +62,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({ onUpload }) => {
           </label>
           <div className="relative">
             <input
+              ref={mainFileInputRef}
               type="file"
               accept=".csv"
               onChange={handleMainFilesChange}
@@ -86,6 +101,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({ onUpload }) => {
           </label>
           <div className="relative">
             <input
+              ref={linkedFileInputRef}
               type="file"
               accept=".csv"
               onChange={handleLinkedFilesChange}

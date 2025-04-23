@@ -50,19 +50,6 @@
               "mergeFromLinked": true
             },
             {
-              "key": "役職",
-              "displayName": "役職",
-              "width": {
-                "min": "100px",
-                "max": "200px",
-                "default": "120px"
-              },
-              "sortable": true,
-              "filterable": true,
-              "visible": true,
-              "mergeFromLinked": true
-            },
-            {
               "key": "ステータス",
               "displayName": "ステータス",
               "width": {
@@ -86,7 +73,7 @@
               "sortable": true,
               "filterable": true,
               "visible": true,
-              "formatter": "(value) => new Date(value).toLocaleString()"
+              "formatter": "(value) => { if (!value || value.trim() === '') return ''; const date = new Date(value); return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`; }"
             },
             {
               "key": "URL",
@@ -135,7 +122,7 @@
               "key": "更新日時",
               "displayName": "更新日時",
               "visible": true,
-              "formatter": "(value) => new Date(value).toLocaleString()"
+              "formatter": "(value) => { if (!value || value.trim() === '') return ''; const date = new Date(value); return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`; }"
             }
           ]
         },
