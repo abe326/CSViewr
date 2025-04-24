@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowUpDown, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, Search, ArrowUp, ArrowDown, X } from 'lucide-react';
 import type { ProcessedColumnConfig } from '../types/index';
 import { formatters, FormatterFunction } from '../utils/formatters';
 
@@ -13,6 +13,7 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [excludeFilters, setExcludeFilters] = useState<Record<string, string>>({});
   const [globalSearch, setGlobalSearch] = useState('');
 
   const handleSort = (field: string) => {
@@ -24,11 +25,18 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
     }
   };
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const handleFilterChange = (key: string, value: string, isExclude: boolean = false) => {
+    if (isExclude) {
+      setExcludeFilters(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    }
   };
 
   // グローバル検索とフィルターの適用
@@ -42,14 +50,23 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
         }
       }
 
-      // 列ごとのフィルター
-      return Object.entries(filters).every(([key, filterValue]) => {
+      // 通常のフィルター（含む）
+      const includeFilterResult = Object.entries(filters).every(([key, filterValue]) => {
         if (!filterValue) return true;
         const cellValue = row[key] || '';
         return cellValue.toLowerCase().includes(filterValue.toLowerCase());
       });
+
+      if (!includeFilterResult) return false;
+
+      // 除外フィルター（含まない）
+      return Object.entries(excludeFilters).every(([key, filterValue]) => {
+        if (!filterValue) return true;
+        const cellValue = row[key] || '';
+        return !cellValue.toLowerCase().includes(filterValue.toLowerCase());
+      });
     });
-  }, [data, filters, globalSearch]);
+  }, [data, filters, excludeFilters, globalSearch]);
 
   const sortedData = useMemo(() => {
     if (!sortField) return filteredData;
@@ -130,16 +147,17 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                   scope="col"
                   className={`
                     px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b-2 border-gray-200
-                    ${header.sortable ? 'cursor-pointer hover:bg-gray-200' : ''}
                     ${header.width ? `w-${header.width}` : ''}
                   `}
-                  onClick={() => header.sortable && handleSort(header.key)}
                 >
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center">
-                      <span>{header.displayName}</span>
+                  <div className="grid grid-rows-[minmax(48px,auto)_auto] gap-2 min-h-[140px]">
+                    <div 
+                      className={`flex items-start ${header.sortable ? 'cursor-pointer hover:bg-gray-200' : ''}`}
+                      onClick={() => header.sortable && handleSort(header.key)}
+                    >
+                      <span className="leading-tight">{header.displayName}</span>
                       {sortField === header.key && (
-                        <span className="ml-1">
+                        <span className="ml-1 flex-shrink-0">
                           {sortDirection === 'asc' ? (
                             <ArrowUp size={14} className="text-indigo-600" />
                           ) : (
@@ -149,15 +167,27 @@ export const DataGrid: React.FC<DataGridProps> = ({ headers, data, onRowClick })
                       )}
                     </div>
                     {header.filterable !== false && (
-                      <div className="relative">
-                        <input
-                          type="text"
-                          className="block w-full rounded-md border-2 border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8 bg-white"
-                          placeholder="フィルタ..."
-                          onChange={(e) => handleFilterChange(header.key, e.target.value)}
-                          value={filters[header.key] || ''}
-                        />
-                        <Search size={14} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <div className="space-y-2 self-end">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="block w-full rounded-md border-2 border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-8 pl-8 bg-white"
+                            placeholder="含む..."
+                            onChange={(e) => handleFilterChange(header.key, e.target.value, false)}
+                            value={filters[header.key] || ''}
+                          />
+                          <Search size={14} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="block w-full rounded-md border-2 border-gray-200 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm h-8 pl-8 bg-white"
+                            placeholder="除外..."
+                            onChange={(e) => handleFilterChange(header.key, e.target.value, true)}
+                            value={excludeFilters[header.key] || ''}
+                          />
+                          <X size={14} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-400" />
+                        </div>
                       </div>
                     )}
                   </div>
