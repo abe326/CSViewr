@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV Viewer Application</title>
+    <!-- アプリケーション設定 -->
+    <script id="app-config" type="application/json">
+      {
+        "gridConfig": {
+          "gridColumns": [
+            {
+              "key": "氏名",
+              "displayName": "氏名",
+              "width": {
+                "min": "150px",
+                "max": "300px",
+                "default": "200px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "isKey": true,
+              "clickable": true
+            },
+            {
+              "key": "社員番号",
+              "displayName": "社員番号",
+              "width": {
+                "min": "100px",
+                "max": "150px",
+                "default": "120px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true
+            },
+            {
+              "key": "部署",
+              "displayName": "部署",
+              "width": {
+                "min": "100px",
+                "max": "150px",
+                "default": "120px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "mergeFromLinked": true
+            },
+            {
+              "key": "ステータス",
+              "displayName": "所属している部署のステータス",
+              "width": {
+                "min": "50px",
+                "max": "50px",
+                "default": "50px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "mergeFromLinked": true
+            },
+            {
+              "key": "更新日時",
+              "displayName": "更新日時",
+              "width": {
+                "min": "180px",
+                "max": "250px",
+                "default": "200px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "formatter": "(value) => { if (!value || value.trim() === '') return ''; const date = new Date(value); return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`; }"
+            },
+            {
+              "key": "URL",
+              "displayName": "URL",
+              "width": {
+                "min": "80px",
+                "max": "150px",
+                "default": "100px"
+              },
+              "sortable": true,
+              "filterable": true,
+              "visible": true,
+              "mergeFromLinked": true,
+              "formatter": "(value) => value ? `<a href=\"${value}\" target=\"_blank\" rel=\"noopener noreferrer\">リンクを開く</a>` : ''"
+            }
+          ]
+        },
+        "detailConfig": {
+          "detailColumns": [
+            {
+              "key": "氏名",
+              "displayName": "氏名",
+              "visible": true
+            },
+            {
+              "key": "社員番号",
+              "displayName": "社員番号",
+              "visible": true
+            },
+            {
+              "key": "部署",
+              "displayName": "部署",
+              "visible": true
+            },
+            {
+              "key": "役職",
+              "displayName": "役職",
+              "visible": true
+            },
+            {
+              "key": "ステータス",
+              "displayName": "ステータス",
+              "visible": true
+            },
+            {
+              "key": "更新日時",
+              "displayName": "更新日時",
+              "visible": true,
+              "formatter": "(value) => { if (!value || value.trim() === '') return ''; const date = new Date(value); return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`; }"
+            }
+          ]
+        },
+        "mergeConfig": {
+          "mainKey": "氏名",
+          "linkedKey": "氏名",
+          "mergeColumns": ["部署", "役職", "ステータス", "URL"]
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="./assets/index-Cg4TyD33.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="./assets/index-B1PUeP9r.js"></script>
+  </body>
+</html>
